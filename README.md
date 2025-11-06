@@ -12,11 +12,11 @@ pip install -r requirements.txt
 ### Demo for gene expression prediction:
 The gene expression prediction performance of Multi-Embed could be found in gene_expression.ipynb.
 Here, we demonstrate the demo performance of Multi-Embed in morphology-related gene expression profiles prediction by training Multi-Embed and downstream prediction model on TCGA-COAD dataset, while evaluating its performance on CPTAC-COAD dataset.
-For a quick demo, the pre-trained models could be accessed at [Google drive](d), including *epoch_247_TCGA_COAD.ckpt* and *gene_pred.ckpt*. The processed evaluation data could be assessed at [Zenodo](https://drive.google.com/drive/folders/1lrdq5JkDSBqzAvwWNV159-lWxPDaMywt?usp=sharing). 
+For a quick demo, the pre-trained models could be accessed at [Google drive](d), including *epoch_247_TCGA_COAD.ckpt* and *gene_pred.ckpt*. The processed evaluation data could be assessed at [Tsinghua cloud](https://cloud.tsinghua.edu.cn/library/c23ff6a5-2627-4bae-9630-8d1f8ca90b20/Multi-Embed/COAD). 
 ```sh
 # Step 1. Get Multi-Embed embeddings
 python eval_slide_image.py \
---image_dir /data/gcf22/CPTAC/COAD/features_uni/h5_files \
+--image_dir DIR_TO_DOWNLOADED_DATA \  # Download from Tsinghua cloud
 --save_dir ./save/TCGA-COAD \
 --omics_dim 1542 \
 --data_type bulk \
@@ -30,7 +30,7 @@ python eval_slide_image.py \
 cd downstream
 python rna_pred_external.py \
 --val_image_dir ../save/TCGA-COAD/CPTAC.pkl \
---val_omics_dir /data/gcf22/CPTAC/COAD/all_cnts.tsv \
+--val_omics_dir DIR_TO_DOWNLOADED_DATA \  # Download from Tsinghua cloud
 --save_dir ../save/TCGA-COAD/res.pkl \
 --checkpoint ../save/TCGA-COAD/gene_pred.ckpt \
 --omics_dim 16501 \
@@ -82,11 +82,11 @@ After running the above code, the pkl file in ./save/st/CN15_D2 should be the sa
 ### Demo for multimodal prognosis prediction:
 Here, we demonstrate the demo performance of Multi-Embed in multimodal prognosis prediction by training Multi-Embed and downstream prediction model on TCGA dataset, while evaluating its performance on the independent datasets.
 The prognosis prediction results can be found in tutorials/prognosis.ipynb. For a glance at the final results, the required input data can be downloaded from [Google drive](https://drive.google.com/file/d/14S4NXv_rF17h47lW1gaEDSefdWLVS2Aa/view?usp=sharing). Please put the prog_lung.pkl file under the directory ./demo/TCGA-LUAD.
-For a quick demo, the pre-trained models could be accessed at [Google drive](https://drive.google.com/drive/folders/1laiuyXj5eMyp4sF_wWtn0SlkBYrc8FSJ?usp=sharing), including *epoch_248_TCGA_LUAD.ckpt* and *prognosis.ckpt*. The evaluation data could be assessed at [Zenodo](https://drive.google.com/drive/folders/1lrdq5JkDSBqzAvwWNV159-lWxPDaMywt?usp=sharing).
+For a quick demo, the pre-trained models could be accessed at [Google drive](https://drive.google.com/drive/folders/1laiuyXj5eMyp4sF_wWtn0SlkBYrc8FSJ?usp=sharing), including *epoch_248_TCGA_LUAD.ckpt* and *prognosis.ckpt*. The evaluation data could be assessed at [Tsinghua cloud](https://cloud.tsinghua.edu.cn/library/c23ff6a5-2627-4bae-9630-8d1f8ca90b20/Multi-Embed/COAD).
 ```sh
 # Step 1. Get Multi-Embed embeddings
 python eval_slide_image.py \
---image_dir /data/gcf22/CPTAC/LUAD/features_uni/h5_files \
+--image_dir DIR_TO_DOWNLOADED_DATA \  # Download from Tsinghua cloud
 --save_dir ./save/TCGA-LUAD \
 --omics_dim 1549 \
 --data_type bulk \
@@ -101,7 +101,7 @@ cd downstream
 python survival_external.py \
 --feat_dir ../save/TCGA-LUAD/CPTAC.pkl \
 --omics_dir ./ \
---survival_pth /data/gcf22/CPTAC/survival/LUAD.csv \
+--survival_pth DIR_TO_DOWNLOADED_DATA \  # Download from Tsinghua cloud
 --save_dir ../save/TCGA-LUAD \
 --checkpoint ../save/TCGA-LUAD/prognosis.ckpt
 ```
