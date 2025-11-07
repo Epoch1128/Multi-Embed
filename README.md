@@ -82,7 +82,7 @@ After running the above code, the pkl file in ./save/st/CN15_D2 should be the sa
 ### Demo for multimodal prognosis prediction:
 Here, we demonstrate the demo performance of Multi-Embed in multimodal prognosis prediction by training Multi-Embed and downstream prediction model on TCGA dataset, while evaluating its performance on the independent datasets.
 The prognosis prediction results can be found in tutorials/prognosis.ipynb. For a glance at the final results, the required input data can be downloaded from [Google drive](https://drive.google.com/file/d/14S4NXv_rF17h47lW1gaEDSefdWLVS2Aa/view?usp=sharing). Please put the prog_lung.pkl file under the directory ./demo/TCGA-LUAD.
-For a quick demo, the pre-trained models could be accessed at [Google drive](https://drive.google.com/drive/folders/1laiuyXj5eMyp4sF_wWtn0SlkBYrc8FSJ?usp=sharing), including *epoch_248_TCGA_LUAD.ckpt* and *prognosis.ckpt*. The evaluation data could be assessed at [Tsinghua cloud](https://cloud.tsinghua.edu.cn/library/c23ff6a5-2627-4bae-9630-8d1f8ca90b20/Multi-Embed/COAD).
+For a quick demo, the pre-trained models could be accessed at [Google drive](https://drive.google.com/drive/folders/1laiuyXj5eMyp4sF_wWtn0SlkBYrc8FSJ?usp=sharing), including *epoch_248_TCGA_LUAD.ckpt* and *prognosis.ckpt*. The evaluation data could be assessed at [Tsinghua cloud](https://cloud.tsinghua.edu.cn/library/c23ff6a5-2627-4bae-9630-8d1f8ca90b20/Multi-Embed/LUAD).
 ```sh
 # Step 1. Get Multi-Embed embeddings
 python eval_slide_image.py \
