@@ -29,6 +29,7 @@ class Emb2RNA(nn.Module):
         return gene, y
 
 def train_loop(epoch, model, dataloader, optimizer, device):
+    model.train()
     loss_fn = nn.MSELoss()
     train_bar = tqdm(dataloader, desc="epoch " + str(epoch), total=len(dataloader),
                             unit="batch", dynamic_ncols=True)
@@ -47,19 +48,21 @@ def train_loop(epoch, model, dataloader, optimizer, device):
 
 
 def val_loop(epoch, model, dataloader, device, save_tiles=False):
+    model.eval()
     pred_list, gt_list = [], []
     pred_tiles_list = []
     name_list = []
-    for data in dataloader:
-        img_feat = data['img_feat'].to(device)
-        omics_pred, omics_st = model(img_feat)
-        omics_pred = omics_pred.squeeze().detach().cpu().numpy()
-        pred_list.append(omics_pred)
-        gt_list.append(data['omic_feat'].squeeze())
-        name_list.extend(data['name'])
-        if save_tiles:
-            omics_st = omics_st.squeeze().detach().cpu().numpy()
-            pred_tiles_list.append(omics_st)
+    with torch.no_grad():
+        for data in dataloader:
+            img_feat = data['img_feat'].to(device)
+            omics_pred, omics_st = model(img_feat)
+            omics_pred = omics_pred.squeeze().detach().cpu().numpy()
+            pred_list.append(omics_pred)
+            gt_list.append(data['omic_feat'].squeeze())
+            name_list.extend(data['name'])
+            if save_tiles:
+                omics_st = omics_st.squeeze().detach().cpu().numpy()
+                pred_tiles_list.append(omics_st)
 
     omics_mat = np.stack(pred_list, axis=0)
     omics_gt = np.stack(gt_list, axis=0)
@@ -98,6 +101,7 @@ def main():
     parser.add_argument('--save_model_dir', type=str, help='Directory to save the model', default=None)
     parser.add_argument('--save_models', action='store_true', help='Whether to save models')
     parser.add_argument('--save_tiles', action='store_true', help='Whether to save gene expression results for each tile')
+    parser.add_argument('--hvg_path', type=str, default='../save/TCGA-COAD/hvgs.json', help='Optional HVG gene list JSON for subset correlation')
     
     # train
     parser.add_argument('--lr', type=float, help='Learning rate', default=1e-4)
@@ -111,10 +115,15 @@ def main():
     parser.add_argument('--hidden_dim', type=int, help='Dim of image data feature', default=512)
     args = parser.parse_args()
     os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
+    if args.save_dir is None:
+        raise ValueError("--save_dir is required.")
     save_dir = os.path.dirname(os.path.abspath(args.save_dir))
     os.makedirs(save_dir, exist_ok=True)
-    save_model_dir = os.path.dirname(os.path.abspath(args.save_model_dir))
-    os.makedirs(save_model_dir, exist_ok=True)
+    if args.save_models:
+        if args.save_model_dir is None:
+            raise ValueError("--save_model_dir is required when --save_models is enabled.")
+        save_model_dir = os.path.dirname(os.path.abspath(args.save_model_dir))
+        os.makedirs(save_model_dir, exist_ok=True)
 
     print('>>> Loading data...')
     
@@ -155,10 +164,11 @@ def main():
     corr_df.index = val_data.gene_list
     print(f">>> Average correlation for genome-wide: {mean_corr}")
 
-    import json
-    with open("../save/TCGA-COAD/hvgs.json", "r") as f:
-        gene_list = json.load(f)
-    print(f">>> Average correlation for HVGs: {np.mean(corr_df.loc[gene_list].values)}")
+    if args.hvg_path is not None:
+        import json
+        with open(args.hvg_path, "r") as f:
+            gene_list = json.load(f)
+        print(f">>> Average correlation for HVGs: {np.mean(corr_df.loc[gene_list].values)}")
 
     if args.save_models and train_mode:
         print(f">>> Model has been saved at {args.save_model_dir}")

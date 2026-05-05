@@ -44,7 +44,7 @@ def main():
         data_prefix = None
         print('Load all data')
     else:
-        data_prefix = get_prefix(args.prefix)
+        data_prefix = get_prefix(args.prefix, mode=1)
         print(f'Load {data_prefix}')
 
     if args.data_type == 'ST':

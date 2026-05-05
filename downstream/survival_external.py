@@ -96,6 +96,7 @@ def save_checkpoint(model, optimizer, save_dir):
     torch.save(checkpoint, save_dir)
 
 def train_loop(epoch, model, dataloader, optimizer, device):
+    model.train()
     loss_fn = NLLSurvLoss_dep()
     train_bar = tqdm(dataloader, desc="epoch " + str(epoch), total=len(dataloader),
                             unit="batch", dynamic_ncols=True)
@@ -121,19 +122,21 @@ def train_loop(epoch, model, dataloader, optimizer, device):
     return np.mean(loss_list)
 
 def val_loop(epoch, model, dataloader, device):
+    model.eval()
     all_risk_scores, all_event_times, all_censorships = [], [], []
     all_names = []
-    for data in tqdm(dataloader):
-        images_feat = data['img_feat'].to(device)
-        surv_pred = model(images_feat).squeeze(1)
-        hazards = torch.sigmoid(surv_pred)
-        survival = torch.cumprod(1 - hazards, dim=1)
-        risk = -torch.sum(survival, dim=1).detach().cpu().numpy()
-        
-        all_risk_scores.append(risk)
-        all_event_times.append(data['months'].numpy())
-        all_censorships.append(data['censor'].numpy())
-        all_names.append(data['name'])
+    with torch.no_grad():
+        for data in tqdm(dataloader):
+            images_feat = data['img_feat'].to(device)
+            surv_pred = model(images_feat).squeeze(1)
+            hazards = torch.sigmoid(surv_pred)
+            survival = torch.cumprod(1 - hazards, dim=1)
+            risk = -torch.sum(survival, dim=1).detach().cpu().numpy()
+            
+            all_risk_scores.append(risk)
+            all_event_times.append(data['months'].numpy())
+            all_censorships.append(data['censor'].numpy())
+            all_names.append(data['name'])
 
     all_risk_scores = np.concatenate(all_risk_scores)
     all_censorships = np.concatenate(all_censorships)
@@ -154,7 +157,6 @@ def main():
     parser.add_argument('--train_survival_pth', type=str, help='Directory to the train omics features', default=None)
 
     parser.add_argument('--feat_dir', type=str, help='Directory to the image features')
-    parser.add_argument('--omics_dir', type=str, help='Directory to the omics features')
     parser.add_argument('--survival_pth', type=str, help='Directory to the survival features')
     parser.add_argument('--save_dir', type=str, help='Directory to save the model')
 

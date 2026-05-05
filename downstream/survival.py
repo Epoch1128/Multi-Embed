@@ -7,7 +7,7 @@ import pickle as pkl
 from torch.optim import Adam
 from torch import nn
 from fusion import MultiSurvFix, NLLSurvLoss_dep
-from data import FusionDataset, FusionRawDataset
+from data import FusionDataset
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 # from lifelines.utils import concordance_index
@@ -22,6 +22,7 @@ def save_checkpoint(model, optimizer, save_dir):
     torch.save(checkpoint, save_dir)
 
 def train_loop(epoch, model, dataloader, optimizer, device):
+    model.train()
     loss_fn = NLLSurvLoss_dep()
     train_bar = tqdm(dataloader, desc="epoch " + str(epoch), total=len(dataloader),
                             unit="batch", dynamic_ncols=True)
@@ -43,19 +44,21 @@ def train_loop(epoch, model, dataloader, optimizer, device):
 
 
 def val_loop(epoch, model, dataloader, device):
+    model.eval()
     all_risk_scores, all_event_times, all_censorships = [], [], []
     all_names = []
-    for idx, data in enumerate(dataloader):
-        img_feat, omics_feat = data['img_feat'].to(device).squeeze(), data['omic_feat'].to(device)
-        surv_pred = model(img_feat, omics_feat)
-        hazards = torch.sigmoid(surv_pred)
-        survival = torch.cumprod(1 - hazards, dim=1)
-        risk = -torch.sum(survival, dim=1).detach().cpu().numpy()
-        
-        all_risk_scores.append(risk)
-        all_event_times.append(data['months'].numpy())
-        all_censorships.append(data['censor'].numpy())
-        all_names.append(data['name'])
+    with torch.no_grad():
+        for idx, data in enumerate(dataloader):
+            img_feat, omics_feat = data['img_feat'].to(device).squeeze(), data['omic_feat'].to(device)
+            surv_pred = model(img_feat, omics_feat)
+            hazards = torch.sigmoid(surv_pred)
+            survival = torch.cumprod(1 - hazards, dim=1)
+            risk = -torch.sum(survival, dim=1).detach().cpu().numpy()
+            
+            all_risk_scores.append(risk)
+            all_event_times.append(data['months'].numpy())
+            all_censorships.append(data['censor'].numpy())
+            all_names.append(data['name'])
 
     all_risk_scores = np.concatenate(all_risk_scores)
     all_censorships = np.concatenate(all_censorships)
@@ -72,7 +75,6 @@ def main():
     parser = argparse.ArgumentParser(description="Prediction with Spots Images")
     parser.add_argument('--seed', default=47, type=int)
     # exp
-    parser.add_argument('--exp', type=str, default='Coembedding')
     parser.add_argument('--save_model', action='store_true')
 
     # data
@@ -98,16 +100,11 @@ def main():
     prefix_info = np.load(args.prefix, allow_pickle=True)
     train_prefix, val_prefix = list(prefix_info[0]), list(prefix_info[1])
 
-    if args.exp in ['Multi-Embed']:
-        train_data = FusionDataset(args.feat_dir, prefixs=train_prefix, survival_pth=args.survival_pth)
-        val_data = FusionDataset(args.feat_dir, prefixs=val_prefix, survival_pth=args.survival_pth)
-    else:
-        train_data = FusionRawDataset(args.feat_dir, args.omics_dir, prefixs=train_prefix, survival_pth=args.survival_pth)
-        val_data = FusionRawDataset(args.feat_dir, args.omics_dir, prefixs=val_prefix, survival_pth=args.survival_pth)
-        
+    train_data = FusionDataset(args.feat_dir, prefixs=train_prefix, survival_pth=args.survival_pth)
+    val_data = FusionDataset(args.feat_dir, prefixs=val_prefix, survival_pth=args.survival_pth)       
 
     train_loader = DataLoader(train_data, batch_size=1, shuffle=True)
-    val_loader = DataLoader(val_data, batch_size=1, shuffle=True)
+    val_loader = DataLoader(val_data, batch_size=1, shuffle=False)
 
     model = MultiSurvFix(input_dim=args.feat_dim, omics_dim=args.omics_dim)
     # print(model)

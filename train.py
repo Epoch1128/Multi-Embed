@@ -49,7 +49,6 @@ def main():
         print('Load all data')
     else:
         data_prefix = get_prefix(args.prefix)
-        # print(f'Load {data_prefix}')
 
     if args.data_type == 'TCGA':
         train_data = BulkDataset(args.image_dir, args.omics_dir, prefixs=data_prefix)

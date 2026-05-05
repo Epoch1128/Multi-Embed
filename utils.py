@@ -31,10 +31,10 @@ def collate_func(batch):
         'neg_feat': neg_image_feat
     }
 
-def get_prefix(prefix):
+def get_prefix(prefix, mode=0):
     prefix_pth = prefix[0]
     if os.path.exists(prefix_pth):
-        return list(np.load(prefix_pth, allow_pickle=True)[0])
+        return list(np.load(prefix_pth, allow_pickle=True)[mode])
     if isinstance(prefix, list):
         return prefix  
     else:

@@ -5,7 +5,7 @@ import os
 import argparse
 import numpy as np
 import pickle as pkl
-from data.dataset import STDataset, BulkImageDataset, VisiumDataset, STImageDataset, XeniumLungDataset
+from data.dataset import BulkImageDataset, STImageDataset
 from torch.utils.data import DataLoader
 from models.arch import MultiEmbed
 from utils import setup_seed, get_prefix
@@ -18,7 +18,7 @@ def main():
     parser.add_argument('--agg_only', action='store_true')
 
     # data
-    parser.add_argument('--data_type', type=str, default='ST', choices=['ST', 'bulk', 'image-only', 'VisiumHD', 'Xenium_lung'])
+    parser.add_argument('--data_type', type=str, default='ST', choices=['ST', 'bulk'])
     parser.add_argument('--image_dir', type=str, help='Directory to the image features')
     parser.add_argument('--save_dir', type=str, help='Directory to save the model')
     parser.add_argument('--save_name', type=str, help='Name to save the model', default=None)
@@ -42,7 +42,7 @@ def main():
         data_prefix = None
         print('Load all data')
     else:
-        data_prefix = get_prefix(args.prefix)
+        data_prefix = get_prefix(args.prefix, mode=1)
         print(f'Load {data_prefix}')
 
     if args.data_type == 'ST':

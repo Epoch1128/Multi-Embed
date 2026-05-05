@@ -54,6 +54,7 @@ class Emb2RNA(nn.Module):
         return gene, y
 
 def train_loop(epoch, model, dataloader, optimizer, device):
+    model.train()
     loss_fn = nn.MSELoss()
     train_bar = tqdm(dataloader, desc="epoch " + str(epoch), total=len(dataloader),
                             unit="batch", dynamic_ncols=True)
@@ -72,19 +73,21 @@ def train_loop(epoch, model, dataloader, optimizer, device):
 
 
 def val_loop(epoch, model, dataloader, device, save_tiles=False):
+    model.eval()
     pred_list, gt_list = [], []
     pred_tiles_list = []
     name_list = []
-    for data in dataloader:
-        img_feat = data['img_feat'].to(device)
-        omics_pred, omics_st = model(img_feat)
-        omics_pred = omics_pred.squeeze().detach().cpu().numpy()
-        pred_list.append(omics_pred)
-        gt_list.append(data['omic_feat'].squeeze())
-        name_list.extend(data['name'])
-        if save_tiles:
-            omics_st = omics_st.squeeze().detach().cpu().numpy()
-            pred_tiles_list.append(omics_st)
+    with torch.no_grad():
+        for data in dataloader:
+            img_feat = data['img_feat'].to(device)
+            omics_pred, omics_st = model(img_feat)
+            omics_pred = omics_pred.squeeze().detach().cpu().numpy()
+            pred_list.append(omics_pred)
+            gt_list.append(data['omic_feat'].squeeze())
+            name_list.extend(data['name'])
+            if save_tiles:
+                omics_st = omics_st.squeeze().detach().cpu().numpy()
+                pred_tiles_list.append(omics_st)
 
     omics_mat = np.stack(pred_list, axis=0)
     omics_gt = np.stack(gt_list, axis=0)
@@ -119,6 +122,7 @@ def main():
     parser.add_argument('--prefix', type=str, help='Directory to prefix file')
     parser.add_argument('--save_tiles', action='store_true', help='Whether to save tiles')
     parser.add_argument('--save_models', action='store_true', help='Whether to save models')
+    parser.add_argument('--save_model_dir', type=str, default=None, help='Path to save the best model')
     
     # train
     parser.add_argument('--model_desc', type=str, help='Model description', default='Baseline')
@@ -165,6 +169,9 @@ def main():
         if mean_corr > corr_max:
             corr_max = mean_corr
             if args.save_models:
+                if args.save_model_dir is None:
+                    raise ValueError("--save_model_dir is required when --save_models is enabled.")
+                os.makedirs(os.path.dirname(os.path.abspath(args.save_model_dir)), exist_ok=True)
                 torch.save(model.state_dict(), args.save_model_dir)
                 print(f">>> Model has been saved at {args.save_model_dir}")
             with open(args.save_dir, 'wb') as file:
