@@ -196,7 +196,7 @@ python eval_slide_image.py \
   --gpu 0
 ```
 
-### Step 4A: Train/evaluate downstream RNA model on the same fold
+### Step 4: Train/evaluate downstream RNA model on the same fold
 
 ```bash
 cd downstream
@@ -209,19 +209,6 @@ python rna_pred.py \
   --image_dim 512 \
   --hidden_dim 512 \
   --gpu 0
-```
-
-### Step 4B: Train/evaluate downstream prognosis model on the same fold
-
-```bash
-cd downstream
-python survival.py \
-  --feat_dir ../save/tcga_cv/fold_1_eval.pkl \
-  --survival_pth PATH_TO_SURVIVAL_CSV \
-  --save_dir ../save/tcga_cv/fold_1_survival \
-  --prefix ../PATH_TO_PREFIX_DIR/folder_1.npy \
-  --feat_dim 512 \
-  --omics_dim 1024
 ```
 
 Benchmark illustration:
